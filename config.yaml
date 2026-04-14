@@ -1,0 +1,119 @@
+train_list: "/root/autodl-tmp/data/XACLE_dataset/meta_data/train.csv"
+validation_list: "/root/autodl-tmp/data/XACLE_dataset/meta_data/validation.csv"
+wav_dir: "/root/autodl-tmp/data/XACLE_dataset/wav"
+# output_dir: "/root/autodl-tmp/src/ckpt"
+output_dir: "/root/autodl-tmp/ckpt"
+
+
+batch_size: 30
+val_batch_size: 1
+lr: 1e-5
+num_workers: 0
+epochs: 50
+max_len: 10
+early_stop_patience: 50
+device: "cuda"
+seed: 42
+Stage A: 3
+
+# resume_path: "/root/autodl-tmp/ckpt/20260323_011952/best_model.pt"
+
+Result_MGA_CLAP_global_only: "/root/autodl-tmp/Result"
+Result_CLAP_global_only: "/root/autodl-tmp/Result/CompCLAP"
+
+
+text_wrapper:
+  pretrained_model_name_or_path: "roberta-large"
+  cache_dir: "/root/autodl-tmp/src/hagging_face"
+
+audio_wrapper:
+  beats_ckpt_path: "/root/autodl-tmp/src/hagging_face/BEATs_iter3_plus_AS2M.pt"
+  proj_output_dim: 512
+
+
+
+clap_encoder:
+  ckpt_path: "/root/autodl-tmp/src/hagging_face/630k-audioset-best.pt"
+  sample_rate: 48000
+
+mga_encoder:
+  cfg_path: "/root/autodl-tmp/src/models/MGA_CLAP/settings/inference_example.yaml"
+  ckpt_path: "/root/autodl-tmp/src/hagging_face/mga-clap.pt"
+  sample_rate: 32000
+
+
+m2d_encoder:
+  weight_path: "/root/autodl-tmp/src/hagging_face/m2d_clap_vit_base-80x1001p16x16p16kpBpTI-2025/checkpoint-30.pth"
+
+
+embed_dim: 1024
+num_ranks: 10
+dropout_rate: 0.3
+num_heads: 4
+num_bins: 21
+
+min_score: -4.01
+max_score: 4.01
+
+
+
+loss:
+  loss_weights:
+    - 1.0
+    - 0.5
+  clipped_mse:
+    tau: 0.25
+    mode: "utt"
+    beta: 0.99
+    cbl: false
+  contrastive:
+    margin: 0.1
+    beta: 0.99
+    cbl: false
+model:
+  conditioner:
+    input_dim: 4096
+    rnn_hidden_size: 512
+    rnn_num_layers: 1
+    model_dim: 1024
+    num_heads: 8
+    num_layers: 2
+  projection:
+    input_dim: 1024
+    hidden_dim: 2048
+    activation: "ReLU"
+    dropout: 0.3
+    range_clipping: false
+
+
+text_encoder:
+  pretrained_model: "roberta-large"
+  csv_path: "./datasets/data/data_list_for_roberta/tempo_notempo_2_2024-12-11.csv"
+  text_column: "caption"
+  id_column: "audiocaps_id"
+  save_path: "./datasets/data/roberta_features"
+
+
+audio_encoder:
+  sample_rate: 16000
+  n_fft: 1024
+  win_length: 1024
+  hop_length: 160
+  n_mels: 64
+  f_min: 60
+  f_max: 7800
+  feature_d: 3072
+  padding_mode: "repetitive"
+  unit_sec: 0.95
+  byola_model: "./models/byola/chkpt/AudioNTT2022-BYOLA-64x96d2048.pth"
+  save_path: "./datasets/data/byola_features"
+  dataset:
+    sample_rate: 16000
+    unit_sec: 10
+    n_fft: 1024
+    win_length: 1024
+    hop_length: 160
+    n_mels: 64
+    f_min: 60
+    f_max: 7800
+    device: "cuda"
