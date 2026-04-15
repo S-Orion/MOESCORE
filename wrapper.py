@@ -87,7 +87,6 @@ class AudioEncoder(nn.Module):
         return audio_features.to(torch.float32), time_padding_mask.bool()
 
 
-
 class TextEncoder(nn.Module):
     def __init__(self, cfg, freeze_pretrained=True):
         super().__init__()
