@@ -90,7 +90,7 @@ Our framework consists of **four specialized experts**:
 A **gating network** dynamically fuses expert outputs for final score prediction.
 
 ![alt text](overall.png)
-![alt text](image.png)
+![alt text](arch.png)
 
 ---
 
