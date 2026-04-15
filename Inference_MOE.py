@@ -13,6 +13,7 @@ import sys
 import os
 from ruamel import yaml
 from easydict import EasyDict
+import argparse
 
 
 def load_config(config_path):
@@ -21,30 +22,31 @@ def load_config(config_path):
     return EasyDict(cfg)
 
 
-def inference(cfg):
-    chkpt_dir = cfg.moe_model_dir
-
-    # dataset_key = "validation"
-    dataset_key = "test"
-
-    dataset_label = f"{dataset_key}_list"
+def inference(
+    cfg, split="test", ckpt_path=None, output_path=None, device_override=None
+):
+    dataset_label = f"{split}_list"
     dataset_list = cfg[dataset_label]
-    # dataset_wav_dir = os.path.join(cfg["wav_dir"], dataset_key)
     dataset_wav_dir = cfg["wav_dir"]
 
-    # dataset_wav_dir = "/root/autodl-tmp/src/Data/Clotho_data/evaluation"
-    print("Perform inference on the following dataset with following checkpoint.")
-    # print(f"\tchkpt:        {chkpt_path}")
+    if device_override is not None:
+        cfg["device"] = device_override
+    device = torch.device(cfg["device"])
+
+    if ckpt_path is None:
+        ckpt_path = cfg.moe_ckpt_path
+
+    print("Perform inference with:")
+    print(f"\tcheckpoint:   {ckpt_path}")
     print(f"\tdata list:    {dataset_list}")
     print(f"\twav dir:      {dataset_wav_dir}")
-    device = torch.device(cfg["device"])
-    # -------------------------------
+    print(f"\tdevice:       {device}")
 
     test_ds = get_infdataset(
         txt_file_path=dataset_list,
         wav_dir=dataset_wav_dir,
         max_sec=cfg["max_len"],
-        sr=16000,
+        sr=cfg["sample_rate"],
     )
 
     test_loader = DataLoader(
@@ -79,23 +81,37 @@ def inference(cfg):
             )
     # -------------------------------
 
-    # -------- write results --------
-    # result_path = os.path.join(chkpt_dir, f"new_inference_result_for_{dataset_key}.csv")
-    result_path = os.path.join(chkpt_dir, f"MOE_test_result_for_{dataset_key}.csv")
-    print(
-        f"Inference has completed. Results will be written to the following file: \n\t{result_path}"
-    )
-    with open(result_path, "w", newline="") as f:
+    if output_path is None:
+        save_dir = getattr(cfg, "moe_model_dir", "./results")
+        os.makedirs(save_dir, exist_ok=True)
+        output_path = os.path.join(save_dir, f"MOE_result_{split}.csv")
+    else:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    print(f"Inference completed. Saving to:\n\t{output_path}")
+    with open(output_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["wav_file_name", "pred_score"])
         writer.writeheader()
         writer.writerows(rows)
-    # # # -------------------------------
-    return
     # -------------------------------
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=str, required=True)
+    parser.add_argument(
+        "--split", type=str, default="test", choices=["train", "validation", "test"]
+    )
+    parser.add_argument("--ckpt", type=str, default=None)
+    parser.add_argument("--output", type=str, default=None)
+    parser.add_argument("--device", type=str, default=None)
+    args = parser.parse_args()
 
-    cfg_path = "config.yaml"
-    cfg = load_config(cfg_path)
-    inference(cfg)
+    cfg = load_config(args.config)
+    inference(
+        cfg,
+        split=args.split,
+        ckpt_path=args.ckpt,
+        output_path=args.output,
+        device_override=args.device,
+    )

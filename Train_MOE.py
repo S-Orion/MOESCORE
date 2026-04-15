@@ -4,7 +4,6 @@ import numpy as np
 import time
 from torch.utils.data import DataLoader
 from scipy.stats import spearmanr
-from transformers import AutoTokenizer
 
 from .data.dataset import get_dataset
 from loss.loss_function import get_loss_function
@@ -16,6 +15,7 @@ import json
 
 from model.MOE_model import MOEModel
 from tqdm import tqdm
+import argparse
 
 
 def diversity_loss(weights):
@@ -93,7 +93,7 @@ def train(cfg):
         ckpt_path = cfg["resume_from_checkpoint"]
         checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
         model.load_state_dict(checkpoint["model_state_dict"], strict=False)
-        # opt.load_state_dict(checkpoint["optimizer_state_dict"])
+        opt.load_state_dict(checkpoint["opt_state_dict"])
         scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
         best_srcc = checkpoint.get("best_srcc", -np.inf)
         patience = checkpoint.get("patience", 0)
@@ -156,7 +156,6 @@ def train(cfg):
 
         print(f"weight: {weight}")
 
-
         # ---------- Validation ----------
         model.eval()
         val_loss = 0.0
@@ -165,7 +164,7 @@ def train(cfg):
             for batch in val_loader:
                 batch = utils.move_to_device(batch, device)
                 # pred  = model.forward(batch, normalizer_eval)
-                pred = model.forward(batch)
+                pred, _ = model.forward(batch)
                 loss = reg_loss_fn(pred, batch["scores"], batch["num_class"])
                 val_loss += loss.item()
                 preds.extend((pred.cpu().numpy() * 5 + 5).tolist())
@@ -209,7 +208,15 @@ def train(cfg):
         # ---------- early-stop ----------
         if srcc > best_srcc:
             best_srcc, patience = srcc, 0
-            torch.save(model.state_dict(), os.path.join(chkpt_dir, "best_model.pt"))
+            checkpoint = {
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "opt_state_dict": opt.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict(),
+                "best_srcc": best_srcc,
+                "patience": patience,
+            }
+            torch.save(checkpoint, os.path.join(chkpt_dir, "best_model.pt"))
             print("✅  best model updated")
         else:
             patience += 1
@@ -222,6 +229,17 @@ def train(cfg):
 
 
 if __name__ == "__main__":
-    path = "config.yaml"
-    config = utils.load_config(path)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=str, required=True)
+    parser.add_argument("--resume", type=str, default=None)
+    parser.add_argument("--device", type=str, default=None)
+    args = parser.parse_args()
+
+    config = utils.load_config(args.config)
+
+    if args.resume is not None:
+        config["resume_from_checkpoint"] = args.resume
+    if args.device is not None:
+        config["device"] = args.device
+
     train(config)
