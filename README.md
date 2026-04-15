@@ -185,13 +185,11 @@ python evaluate.py <inference_csv_path> <ground_truth_csv_path> <save_results_di
 ## Citation
 If you find this project useful, please cite:
 ```bibtex
-@inproceedings{[citation_key],
-  title     = {MOESCORE: Mixture-of-Experts-Based Text-Audio Relevance Score Prediction for Text-to-Audio System Evaluation},
-  author    = {[Author_List]},
-  booktitle = {[Conference_Name]},
-  year      = {[Year]},
-  pages     = {[Pages]},
-  doi       = {[DOI]}
+@article{sun2026moescore,
+  title={MoEScore: Mixture-of-Experts-Based Text-Audio Relevance Score Prediction for Text-to-Audio System Evaluation},
+  author={Sun, Bochao and Xiao, Yang and Yin, Han},
+  journal={arXiv preprint arXiv:2601.06829},
+  year={2026}
 }
 ```
 
