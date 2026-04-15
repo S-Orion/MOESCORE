@@ -72,6 +72,7 @@ The final loss is:
 ```math
 L = \beta L_{mse} + \gamma L_{con}
 ```
+---
 
 ![alt text](overall.png)
 ![alt text](arch.png)
@@ -119,7 +120,7 @@ pip install -r requirements.txt
 | Expert 3 | M2D-CLAP-based expert    | [Checkpoint_Link] |
 | Expert 4 | SeqCoAttn-based expert   | [Checkpoint_Link] |
 
-
+---
 
 ## Data Preparation
 - Download the XACLE Challenge 2026 dataset from [here](https://github.com/XACLE-Challenge/the_first_XACLE_challenge_dataset_train_validation).
@@ -147,6 +148,7 @@ pip install -r requirements.txt
         ├──   .
         └──   .
 ```
+---
 
 ## Train
 ```bash
@@ -179,6 +181,7 @@ python evaluate.py <inference_csv_path> <ground_truth_csv_path> <save_results_di
 
 - The results for SRCC, LCC, KTAU, MSE, and the number of evaluation data are written to a file named evaluation_result.csv inside <save_results_dir>.
 
+---
 ## Citation
 If you find this project useful, please cite:
 ```bibtex
